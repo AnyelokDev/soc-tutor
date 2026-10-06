@@ -45,9 +45,11 @@ MAX_CHARS_LINEA = 300            # recorte de líneas largas en la evidencia
 
 MODELO_ORQUESTADOR = "claude-opus-5-5"
 MODELO_WORKER = "claude-sonnet-5-5"
-MAX_TOKENS_PLAN = 4000
-MAX_TOKENS_WORKER = 8000
-MAX_TOKENS_SINTESIS = 16000
+# Medidos con los modelos reales: con 4000/8000/16000 el plan, un worker y la
+# síntesis se cortaban y había que pagar un reintento. Con streaming no hay timeout.
+MAX_TOKENS_PLAN = 8000
+MAX_TOKENS_WORKER = 16000
+MAX_TOKENS_SINTESIS = 32000
 
 WORKERS = ("linea_tiempo", "mitre_indicadores", "contencion_erradicacion", "recuperacion_mejoras")
 ROLES_ORDEN = ("orquestador_plan",) + WORKERS + ("orquestador_sintesis",)

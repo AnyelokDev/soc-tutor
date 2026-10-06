@@ -77,7 +77,9 @@ Todas pasan por `llamar_api`, que usa `client.messages.stream(...)`, no pasa
 `temperature` ni otros parámetros opcionales y registra una fila de métricas por
 llamada, protegida con un candado porque los workers corren en hilos.
 
-- `max_tokens`: plan 4000, workers 8000, síntesis 16000.
+- `max_tokens`: plan 8000, workers 16000, síntesis 32000. Se subieron tras las
+  primeras ejecuciones reales: con la mitad, las respuestas largas se cortaban y
+  cada corte costaba un reintento.
 - La primera línea del prompt de usuario es `TAREA: <nombre>`
   (`planificacion`, `linea_tiempo`, `mitre_indicadores`, `contencion_erradicacion`,
   `recuperacion_mejoras`, `sintesis`). El cliente falso de las pruebas enruta por ahí.
