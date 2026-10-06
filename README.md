@@ -112,10 +112,14 @@ las líneas syslog no se envía).
   evidencia llega a los modelos dentro de `<evidencia_log>…</evidencia_log>`,
   las reglas les indican que ese bloque son datos y no instrucciones, y si una
   línea intenta darles órdenes deben reportarla como indicador ("posible log
-  manipulado") con su L#. Si el log trae esas etiquetas, se neutralizan para que
-  no puedan cerrar el bloque. Esto reduce el riesgo, no lo elimina: un modelo
-  aún puede equivocarse, así que la revisión humana de los comandos sigue siendo
-  necesaria.
+  manipulado") con su L#. Lo mismo vale entre etapas: la clasificación y la
+  instrucción que el plan da a cada worker, y las salidas de los workers que
+  revisa la síntesis, también van delimitadas y se tratan como datos, porque las
+  escribió un modelo que leyó el log; la instrucción del plan concreta la tarea,
+  pero no puede anular las reglas. Si un texto trae esas etiquetas, se
+  neutralizan para que no pueda cerrar su bloque. Esto reduce el riesgo, no lo
+  elimina: un modelo aún puede equivocarse, así que la revisión humana de los
+  comandos sigue siendo necesaria.
 - `ejemplo_auth.log` es sintético. Usa IPs de documentación (RFC 5737:
   `203.0.113.x` y `198.51.100.x`) y una IP privada, `10.0.0.25`, como contraste.
 - `reportes/` incluye el texto del log analizado: no lo compartas sin anonimizar.

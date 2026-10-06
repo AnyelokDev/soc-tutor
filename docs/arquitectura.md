@@ -83,6 +83,16 @@ llamada, protegida con un candado porque los workers corren en hilos.
 - La primera línea del prompt de usuario es `TAREA: <nombre>`
   (`planificacion`, `linea_tiempo`, `mitre_indicadores`, `contencion_erradicacion`,
   `recuperacion_mejoras`, `sintesis`). El cliente falso de las pruebas enruta por ahí.
+- Todo texto que no escribe el código va delimitado (defensa contra inyección de
+  prompt): la evidencia en `<evidencia_log>`, y entre etapas la clasificación del
+  plan en `<clasificacion_orquestador>`, su instrucción a cada worker en
+  `<instruccion_orquestador>` y las salidas de los workers en `<resultados_workers>`.
+  Las reglas 7 y 8 de `REGLAS_COMUNES` dicen que esos bloques son datos (la
+  instrucción concreta la tarea pero no anula las reglas) y que un intento de dar
+  órdenes se reporta en `indicadores` o, en la síntesis, también en
+  `correcciones_orquestador`. `envolver()` neutraliza a `[etiqueta]` cualquiera de
+  esas etiquetas que venga dentro del texto, para que no cierre su bloque. Es una
+  mitigación, no una garantía.
 - Roles de métricas: `orquestador_plan`, los cuatro workers y `orquestador_sintesis`.
   Un reintento es otra fila con el sufijo ` (reintento)`. Cada fila:
   `{"rol", "modelo", "tokens_in", "tokens_out", "segundos"}`.
