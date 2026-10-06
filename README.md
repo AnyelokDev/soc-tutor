@@ -144,6 +144,12 @@ internet y no gastan créditos. Cubren el parseo, los validadores, el escape del
 dashboard y el pipeline en cuatro escenarios (normal, reintento, falla de un
 worker y falla de la síntesis). `-B` evita crear `__pycache__`.
 
+## Proyecto relacionado
+
+[**soc-purple-team-wazuh**](https://github.com/AnyelokDev/soc-purple-team-wazuh) — el otro lado
+del mismo problema: allí se *detecta* el ataque con reglas custom de Wazuh sobre una cuadrícula
+MITRE ATT&CK en vivo; aquí se *explica* lo que quedó escrito en el log.
+
 ## Documentación y licencia
 
 - [docs/arquitectura.md](docs/arquitectura.md): flujo, datos, validación y decisiones.
