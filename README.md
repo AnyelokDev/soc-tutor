@@ -107,6 +107,15 @@ las líneas syslog no se envía).
   ejecuta ninguno. Los marcados con ⚠️ requieren aprobación antes de correrlos.
   Esa marca la pone el modelo, y un log manipulado podría inducirlo a error:
   revisa cada comando antes de copiarlo, aunque no lleve ⚠️.
+- Inyección de prompt: parte del auth.log la controla el atacante (por ejemplo,
+  el usuario de un `ssh "texto"@host` queda escrito en el log). Por eso la
+  evidencia llega a los modelos dentro de `<evidencia_log>…</evidencia_log>`,
+  las reglas les indican que ese bloque son datos y no instrucciones, y si una
+  línea intenta darles órdenes deben reportarla como indicador ("posible log
+  manipulado") con su L#. Si el log trae esas etiquetas, se neutralizan para que
+  no puedan cerrar el bloque. Esto reduce el riesgo, no lo elimina: un modelo
+  aún puede equivocarse, así que la revisión humana de los comandos sigue siendo
+  necesaria.
 - `ejemplo_auth.log` es sintético. Usa IPs de documentación (RFC 5737:
   `203.0.113.x` y `198.51.100.x`) y una IP privada, `10.0.0.25`, como contraste.
 - `reportes/` incluye el texto del log analizado: no lo compartas sin anonimizar.

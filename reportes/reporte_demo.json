@@ -824,44 +824,44 @@
     {
       "rol": "orquestador_plan",
       "modelo": "claude-opus-5-5",
-      "tokens_in": 1299,
+      "tokens_in": 1436,
       "tokens_out": 950,
-      "segundos": 2.02
+      "segundos": 1.86
     },
     {
       "rol": "linea_tiempo",
       "modelo": "claude-sonnet-5-5",
-      "tokens_in": 1659,
+      "tokens_in": 1796,
       "tokens_out": 1758,
-      "segundos": 1.28
+      "segundos": 2.22
     },
     {
       "rol": "mitre_indicadores",
       "modelo": "claude-sonnet-5-5",
-      "tokens_in": 1740,
+      "tokens_in": 1877,
       "tokens_out": 1491,
-      "segundos": 1.48
+      "segundos": 2.17
     },
     {
       "rol": "contencion_erradicacion",
       "modelo": "claude-sonnet-5-5",
-      "tokens_in": 1775,
+      "tokens_in": 1912,
       "tokens_out": 1674,
-      "segundos": 1.49
+      "segundos": 2.05
     },
     {
       "rol": "recuperacion_mejoras",
       "modelo": "claude-sonnet-5-5",
-      "tokens_in": 1646,
+      "tokens_in": 1783,
       "tokens_out": 1191,
-      "segundos": 1.87
+      "segundos": 2.27
     },
     {
       "rol": "orquestador_sintesis",
       "modelo": "claude-opus-5-5",
-      "tokens_in": 7365,
+      "tokens_in": 7502,
       "tokens_out": 6770,
-      "segundos": 3.44
+      "segundos": 3.08
     }
   ],
   "pipeline": {
@@ -883,9 +883,9 @@
         }
       },
       "error": null,
-      "tokens_in": 1299,
+      "tokens_in": 1436,
       "tokens_out": 950,
-      "segundos": 2.02
+      "segundos": 1.86
     },
     "linea_tiempo": {
       "estado": "listo",
@@ -1016,9 +1016,9 @@
         ]
       },
       "error": null,
-      "tokens_in": 1659,
+      "tokens_in": 1796,
       "tokens_out": 1758,
-      "segundos": 1.28
+      "segundos": 2.22
     },
     "mitre_indicadores": {
       "estado": "listo",
@@ -1133,9 +1133,9 @@
         ]
       },
       "error": null,
-      "tokens_in": 1740,
+      "tokens_in": 1877,
       "tokens_out": 1491,
-      "segundos": 1.48
+      "segundos": 2.17
     },
     "contencion_erradicacion": {
       "estado": "listo",
@@ -1236,9 +1236,9 @@
         ]
       },
       "error": null,
-      "tokens_in": 1775,
+      "tokens_in": 1912,
       "tokens_out": 1674,
-      "segundos": 1.49
+      "segundos": 2.05
     },
     "recuperacion_mejoras": {
       "estado": "listo",
@@ -1298,9 +1298,9 @@
         ]
       },
       "error": null,
-      "tokens_in": 1646,
+      "tokens_in": 1783,
       "tokens_out": 1191,
-      "segundos": 1.87
+      "segundos": 2.27
     },
     "sintesis": {
       "estado": "listo",
@@ -1316,19 +1316,19 @@
         ]
       },
       "error": null,
-      "tokens_in": 7365,
+      "tokens_in": 7502,
       "tokens_out": 6770,
-      "segundos": 3.44
+      "segundos": 3.08
     }
   },
   "workers_fallidos": [],
-  "workers_segundos_reloj": 1.87,
+  "workers_segundos_reloj": 2.28,
   "modelos": {
     "orquestador": "claude-opus-5-5",
     "worker": "claude-sonnet-5-5"
   },
   "archivo_log": "ejemplo_auth.log",
-  "generado": "2026-10-05T20:20:07",
+  "generado": "2026-10-06T15:58:36",
   "_demo": true,
   "_nota": "Reporte de demostración: las respuestas de los modelos fueron escritas a mano (cliente falso) y las métricas son estimaciones; no lo generó la API."
 }
