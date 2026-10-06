@@ -454,6 +454,38 @@ class TestAprobacionForzadaPorCodigo(unittest.TestCase):
         "sudo sh -c 'cd /root/evidencia && sha256sum auth.log > SHA256SUMS'",
     ]
 
+    # Envoltorios que ejecutan el comando en la propia máquina.
+    ENVOLTORIOS_PELIGROSOS = [
+        "eval userdel demo",
+        "setsid userdel demo",
+        "flock /tmp/lock userdel demo",
+        "watch -n 5 userdel demo",
+        'su -c "userdel demo"',
+        'runuser -u root -c "userdel demo"',
+        'script -c "userdel demo" /dev/null',
+        'busybox sh -c "userdel demo"',
+        # variantes con el comando entero entre comillas
+        'eval "userdel demo"',
+        'flock -w 10 /tmp/lock -c "userdel demo"',
+    ]
+    ENVOLTORIOS_INOFENSIVOS = [
+        "watch systemctl status sshd",
+        "script /dev/null",
+        "flock /tmp/lock ls -l",
+        'su -c "whoami"',
+        'eval "last -i"',
+    ]
+
+    def test_envoltorios_que_ejecutan_un_comando_peligroso_exigen_aprobacion(self):
+        for comando in self.ENVOLTORIOS_PELIGROSOS:
+            with self.subTest(comando=comando):
+                self.assertTrue(st.exige_aprobacion(comando))
+
+    def test_envoltorios_con_comandos_de_solo_lectura_no_se_marcan(self):
+        for comando in self.ENVOLTORIOS_INOFENSIVOS:
+            with self.subTest(comando=comando):
+                self.assertFalse(st.exige_aprobacion(comando))
+
     def test_comandos_que_borran_o_cortan_accesos_exigen_aprobacion(self):
         for comando in self.PELIGROSOS:
             with self.subTest(comando=comando):

@@ -730,24 +730,29 @@ PREFIJOS = {
     "doas": {"-u", "-C"}, "env": {"-u", "-C"}, "nice": {"-n"}, "ionice": {"-c", "-n", "-p"},
     "timeout": {"-s", "-k"}, "xargs": {"-I", "-n", "-P", "-d", "-L", "-E", "-s", "-a"},
     "nohup": set(), "stdbuf": set(), "command": set(), "exec": set(), "time": set(),
+    "eval": set(), "setsid": set(), "busybox": set(), "watch": {"-n", "--interval"},
+    "flock": {"-w", "--timeout", "-E", "--conflict-exit-code"},
 }
+# Envoltorios que ejecutan la cadena que va tras -c (su -c "userdel x").
+SHELLS_CON_C = ("sh", "bash", "dash", "zsh", "su", "runuser", "script")
 OPERADORES = frozenset(";|&()")             # separan comandos: ; | || && & ( ) $( )
 
 
 def comando_real(tokens):
     """Quita sudo, env, xargs y similares (con sus opciones) y devuelve [comando, *args]."""
-    i, prefijo = 0, None
+    i, prefijo, falta_candado = 0, None, False
     while i < len(tokens):
         token = tokens[i]
         if token in ("{", "!"):                 # grupo o negación
             i += 1
         elif os.path.basename(token) in PREFIJOS:
             prefijo, i = os.path.basename(token), i + 1
+            falta_candado = prefijo == "flock"  # flock ARCHIVO comando ...
         elif prefijo and token.startswith("-"):
             i += 2 if token in PREFIJOS[prefijo] else 1
-        elif prefijo and (re.fullmatch(r"\w+=.*", token)
+        elif prefijo and (re.fullmatch(r"\w+=.*", token) or falta_candado
                           or (prefijo == "timeout" and re.fullmatch(r"[\d.]+[smhd]?", token))):
-            i += 1
+            i, falta_candado = i + 1, False
         else:
             break
     return tokens[i:]
@@ -776,8 +781,10 @@ def segmento_exige_aprobacion(tokens):
     partes = comando_real(tokens)
     if not partes:
         return False
+    if any(c.isspace() for c in partes[0]):  # cadena entre comillas: eval "…", watch "…"
+        return exige_aprobacion(partes[0])
     nombre, args = os.path.basename(partes[0]), set(partes[1:])
-    if nombre in ("sh", "bash", "dash", "zsh") and "-c" in partes[1:-1]:
+    if nombre in SHELLS_CON_C and "-c" in partes[1:-1]:
         return exige_aprobacion(partes[partes.index("-c") + 1])   # sudo sh -c '...'
     if nombre in COMANDOS_CON_APROBACION or nombre.startswith("mkfs."):
         return not args & ARGUMENTOS_SOLO_LECTURA.get(nombre, set())
