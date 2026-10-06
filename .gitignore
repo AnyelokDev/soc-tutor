@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secretos: la clave de la API va en la variable de entorno, nunca en el repo
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa*
+id_ed25519*
+credentials*.json
+secrets*.json
+service-account*.json
+secrets/
+.secrets/
+
+# Salidas generadas: los reportes reales incluyen el texto crudo del log analizado.
+# Solo se versiona el reporte de demostración (sintético).
+reportes/*
+!reportes/reporte_demo.json
+
+# Logs reales: evita subir un auth.log por accidente (rotados, comprimidos y registros
+# de login binarios incluidos). Solo se versiona el de ejemplo (sintético).
+*.log
+*.log.*
+auth.log*
+btmp
+wtmp
+*.gz
+!ejemplo_auth.log
+
+# Paquetes y configuración local de herramientas
+*.zip
+.claude/
+
+# Capturas y perfiles de navegador de pruebas manuales
+*.png
+edge_perfil*/
+chrome-profile*/
+*-browser-profile/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
