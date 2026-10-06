@@ -467,6 +467,11 @@ class TestAprobacionForzadaPorCodigo(unittest.TestCase):
         # variantes con el comando entero entre comillas
         'eval "userdel demo"',
         'flock -w 10 /tmp/lock -c "userdel demo"',
+        "pkexec userdel demo",
+        "pkexec --user root userdel demo",
+        "chroot / userdel demo",
+        "chroot --userspec=root:root /mnt userdel demo",
+        "chroot --userspec root:root /mnt userdel demo",
     ]
     ENVOLTORIOS_INOFENSIVOS = [
         "watch systemctl status sshd",
@@ -474,6 +479,9 @@ class TestAprobacionForzadaPorCodigo(unittest.TestCase):
         "flock /tmp/lock ls -l",
         'su -c "whoami"',
         'eval "last -i"',
+        "pkexec last -i",
+        "chroot /mnt ls /etc",
+        "chroot /mnt",
     ]
 
     def test_envoltorios_que_ejecutan_un_comando_peligroso_exigen_aprobacion(self):

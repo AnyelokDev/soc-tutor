@@ -732,7 +732,10 @@ PREFIJOS = {
     "nohup": set(), "stdbuf": set(), "command": set(), "exec": set(), "time": set(),
     "eval": set(), "setsid": set(), "busybox": set(), "watch": {"-n", "--interval"},
     "flock": {"-w", "--timeout", "-E", "--conflict-exit-code"},
+    "pkexec": {"--user"}, "chroot": {"--userspec", "--groups"},
 }
+# Prefijos con un argumento posicional antes del comando: flock ARCHIVO, chroot RAIZ.
+PREFIJOS_CON_POSICIONAL = ("flock", "chroot")
 # Envoltorios que ejecutan la cadena que va tras -c (su -c "userdel x").
 SHELLS_CON_C = ("sh", "bash", "dash", "zsh", "su", "runuser", "script")
 OPERADORES = frozenset(";|&()")             # separan comandos: ; | || && & ( ) $( )
@@ -740,19 +743,19 @@ OPERADORES = frozenset(";|&()")             # separan comandos: ; | || && & ( ) 
 
 def comando_real(tokens):
     """Quita sudo, env, xargs y similares (con sus opciones) y devuelve [comando, *args]."""
-    i, prefijo, falta_candado = 0, None, False
+    i, prefijo, falta_posicional = 0, None, False
     while i < len(tokens):
         token = tokens[i]
         if token in ("{", "!"):                 # grupo o negación
             i += 1
         elif os.path.basename(token) in PREFIJOS:
             prefijo, i = os.path.basename(token), i + 1
-            falta_candado = prefijo == "flock"  # flock ARCHIVO comando ...
+            falta_posicional = prefijo in PREFIJOS_CON_POSICIONAL
         elif prefijo and token.startswith("-"):
             i += 2 if token in PREFIJOS[prefijo] else 1
-        elif prefijo and (re.fullmatch(r"\w+=.*", token) or falta_candado
+        elif prefijo and (re.fullmatch(r"\w+=.*", token) or falta_posicional
                           or (prefijo == "timeout" and re.fullmatch(r"[\d.]+[smhd]?", token))):
-            i, falta_candado = i + 1, False
+            i, falta_posicional = i + 1, False
         else:
             break
     return tokens[i:]
@@ -761,8 +764,10 @@ def comando_real(tokens):
 def segmentos(comando):
     """Tokens de cada comando de la línea (cortando en ; | & y paréntesis, no dentro de comillas)."""
     for linea in (comando or "").replace("`", " ; ").splitlines():
+        lexer = shlex.shlex(linea, posix=True, punctuation_chars=True)
+        lexer.whitespace_split = True       # corta solo en espacios y operadores (root:root es un token)
         try:
-            tokens = list(shlex.shlex(linea, posix=True, punctuation_chars=True))
+            tokens = list(lexer)
         except ValueError:                  # comillas sin cerrar: corte simple
             tokens = re.findall(r"[;|&()]+|[^\s;|&()]+", linea)
         actual = []

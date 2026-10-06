@@ -143,8 +143,9 @@ Las respuestas de los modelos no se aceptan tal cual. Hay dos niveles:
 - Además, `exige_aprobacion()` lo fuerza a `true` si el comando borra, corta
   accesos o cambia cuentas, servicios o el firewall, diga lo que diga el modelo.
   Trocea la línea con `shlex` (respeta comillas: `grep 'userdel|passwd'` no se
-  marca), salta prefijos como `sudo -u root`, `xargs -r`, `eval`, `setsid`,
-  `watch -n 5`, `busybox` o `flock ARCHIVO`, entra en la cadena tras `-c` de
+  marca; solo corta en espacios y operadores, así `root:root` es un token), salta
+  prefijos como `sudo -u root`, `pkexec --user root`, `xargs -r`, `eval`, `setsid`,
+  `watch -n 5`, `busybox`, `flock ARCHIVO` o `chroot RAIZ`, entra en la cadena tras `-c` de
   `sh`/`bash`/`su`/`runuser`/`script` y en un comando entero entre comillas
   (`eval "…"`, `flock … -c "…"`), y
   excluye los usos de solo lectura (`iptables -L`, `chage -l`, `systemctl status`,
