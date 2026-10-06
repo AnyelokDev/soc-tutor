@@ -31,6 +31,20 @@ import soc_tutor as st  # noqa: E402
 from generar_reporte_demo import (  # noqa: E402
     entorno_con_cliente_falso, ejecutar_soc_tutor, generar_reporte_demo)
 
+
+def cargar_respuestas_falsas():
+    # Por ruta y no por sys.path: con tests/fake en el path, el anthropic falso
+    # taparía al real dentro de este proceso.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "respuestas_falsas", CARPETA_TESTS / "fake" / "respuestas.py")
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo.RESPUESTAS
+
+
+RESPUESTAS = cargar_respuestas_falsas()
+
 LOG_EJEMPLO = RAIZ / "ejemplo_auth.log"
 REPORTE_DEMO = RAIZ / "reportes" / "reporte_demo.json"
 ANIO_EJEMPLO = 2026
@@ -393,6 +407,80 @@ class TestPromptsDelimitanLaEvidencia(unittest.TestCase):
                          "<instruccion_orquestador>"):
             self.assertIn(etiqueta, st.REGLAS_COMUNES)
         self.assertIn("nunca puede anular estas reglas", st.REGLAS_COMUNES)
+
+
+class TestAprobacionForzadaPorCodigo(unittest.TestCase):
+    PELIGROSOS = [
+        "rm -f /tmp/.update.sh",
+        "sudo userdel -r sysbackup",
+        "/usr/sbin/userdel sysbackup",
+        "usermod -L -e 1 deploy",
+        "passwd -l deploy",
+        "chage -d 0 deploy",
+        "gpasswd -d sysbackup sudo",
+        "iptables -I INPUT -s 203.0.113.45 -j DROP",
+        "ufw deny from 203.0.113.45",
+        "nft add rule inet filter input ip saddr 203.0.113.45 drop",
+        "sudo -u root pkill -KILL -u sysbackup",
+        "timeout 5 kill 1234",
+        "systemctl restart ssh",
+        "crontab -r -u sysbackup",
+        "sed -i 's/yes/no/' /etc/ssh/sshd_config",
+        "apt-get purge -y paquete",
+        "find /tmp -name '*.sh' -delete",
+        "find / -name x -exec rm {} \\;",
+        "ls /tmp | xargs -r rm",
+        "cp -a /tmp/x /root/evidencia/ && rm /tmp/x",
+        "echo $(rm /tmp/x)",
+        "( sudo rm /tmp/x )",
+        "sudo sh -c 'cd /root && userdel -r sysbackup'",
+        "last -i\nrm /tmp/x",
+    ]
+    INOFENSIVOS = [
+        "",
+        "last -i",
+        "ss -tnp",
+        "sha256sum /var/log/auth.log",
+        "grep -E 'userdel|passwd|usermod' /var/log/auth.log",
+        "iptables -L INPUT -n",
+        "nft list ruleset",
+        "ufw status",
+        "chage -l deploy",
+        "systemctl status ssh",
+        "crontab -l -u sysbackup",
+        "sed -n '1,5p' /etc/ssh/sshd_config",
+        "find /tmp -name '*.sh' -ls",
+        "echo 'rm -rf /' > nota.txt",
+        "sudo sh -c 'cd /root/evidencia && sha256sum auth.log > SHA256SUMS'",
+    ]
+
+    def test_comandos_que_borran_o_cortan_accesos_exigen_aprobacion(self):
+        for comando in self.PELIGROSOS:
+            with self.subTest(comando=comando):
+                self.assertTrue(st.exige_aprobacion(comando))
+
+    def test_comandos_de_solo_lectura_no_se_marcan(self):
+        for comando in self.INOFENSIVOS:
+            with self.subTest(comando=comando):
+                self.assertFalse(st.exige_aprobacion(comando))
+
+    def test_el_codigo_anade_la_marca_aunque_el_modelo_diga_false(self):
+        paso = {"texto": "Elimina la cuenta", "comando": "userdel -r sysbackup",
+                "requiere_aprobacion": False}
+        self.assertIs(st.validar_pasos([paso], "Erradicación")[0]["requiere_aprobacion"], True)
+
+    def test_el_codigo_nunca_quita_la_marca(self):
+        paso = {"texto": "Revisa accesos", "comando": "last -i", "requiere_aprobacion": True}
+        self.assertIs(st.validar_pasos([paso], "Contención")[0]["requiere_aprobacion"], True)
+        paso["requiere_aprobacion"] = False
+        self.assertIs(st.validar_pasos([paso], "Contención")[0]["requiere_aprobacion"], False)
+
+    def test_tambien_aplica_al_playbook_de_la_sintesis(self):
+        sintesis = json.loads(json.dumps(RESPUESTAS["sintesis"]))
+        paso = sintesis["playbook"]["fases"][1]["pasos"][0]
+        paso["comando"], paso["requiere_aprobacion"] = "iptables -I INPUT -s 203.0.113.45 -j DROP", False
+        validado = st.validar_sintesis(sintesis, total_lineas=len(LINEAS), exigir_todas=True)
+        self.assertIs(validado["playbook"]["fases"][1]["pasos"][0]["requiere_aprobacion"], True)
 
 
 # ---------------------------------------------------------------------- dashboard

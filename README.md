@@ -105,8 +105,12 @@ las líneas syslog no se envía).
 
 - Los comandos del playbook son sugerencias para revisar; la herramienta no
   ejecuta ninguno. Los marcados con ⚠️ requieren aprobación antes de correrlos.
-  Esa marca la pone el modelo, y un log manipulado podría inducirlo a error:
-  revisa cada comando antes de copiarlo, aunque no lleve ⚠️.
+  La marca la propone el modelo, pero el código la añade siempre a los comandos
+  que borran, cortan accesos o cambian cuentas, servicios o el firewall (`rm`,
+  `userdel`, `usermod`, `passwd`, `kill`, `iptables`, `ufw`, `systemctl stop`,
+  `sed -i`…), aunque el modelo diga que no; el código puede añadirla, nunca
+  quitarla. La lista no cubre todo (por ejemplo, vaciar un archivo con `>`), así
+  que revisa cada comando antes de copiarlo, aunque no lleve ⚠️.
 - Inyección de prompt: parte del auth.log la controla el atacante (por ejemplo,
   el usuario de un `ssh "texto"@host` queda escrito en el log). Por eso la
   evidencia llega a los modelos dentro de `<evidencia_log>…</evidencia_log>`,

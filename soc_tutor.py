@@ -21,6 +21,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import sys
 import threading
 import time
@@ -696,6 +697,106 @@ def validar_mitre_indicadores(obj, total_lineas):
             "no_concluible": validar_lista_textos(obj.get("no_concluible"), "no_concluible")}
 
 
+# Comandos que borran, cortan accesos o cambian cuentas, servicios o el firewall.
+# Llevan ⚠️ siempre, diga lo que diga el modelo: un log manipulado podría
+# convencerlo de no marcarlos, y esta comprobación no depende de él.
+COMANDOS_CON_APROBACION = frozenset({
+    "rm", "rmdir", "shred", "unlink", "truncate", "dd", "mkfs", "wipefs",
+    "userdel", "deluser", "groupdel", "usermod", "passwd", "chpasswd", "chage", "gpasswd",
+    "kill", "pkill", "killall",
+    "iptables", "ip6tables", "nft", "ufw", "firewall-cmd",
+    "shutdown", "reboot", "halt", "poweroff",
+})
+# Usos de solo lectura de esos mismos comandos (iptables -L no cambia nada).
+ARGUMENTOS_SOLO_LECTURA = {
+    "chage": {"-l", "--list"}, "passwd": {"-S", "--status"},
+    "iptables": {"-L", "--list", "-S", "--list-rules", "-C", "--check"},
+    "ip6tables": {"-L", "--list", "-S", "--list-rules", "-C", "--check"},
+    "nft": {"list"}, "ufw": {"status"},
+    "firewall-cmd": {"--state", "--list-all", "--get-active-zones", "--list-rich-rules"},
+}
+# Herramientas que solo son peligrosas con ciertos argumentos (systemctl status no lo es).
+ARGUMENTOS_CON_APROBACION = {
+    "systemctl": {"stop", "disable", "mask", "restart", "kill", "isolate"},
+    "service": {"stop", "restart"},
+    "apt": {"remove", "purge", "autoremove"}, "apt-get": {"remove", "purge", "autoremove"},
+    "dpkg": {"-r", "--remove", "-P", "--purge"},
+    "crontab": {"-r"}, "find": {"-delete"},
+}
+# Prefijos que no son el comando real (sudo -u root rm ... sigue siendo rm),
+# con las opciones que consumen el siguiente argumento.
+PREFIJOS = {
+    "sudo": {"-u", "-g", "-C", "-h", "-p", "-U", "-r", "-t", "-D", "-R", "--user", "--group"},
+    "doas": {"-u", "-C"}, "env": {"-u", "-C"}, "nice": {"-n"}, "ionice": {"-c", "-n", "-p"},
+    "timeout": {"-s", "-k"}, "xargs": {"-I", "-n", "-P", "-d", "-L", "-E", "-s", "-a"},
+    "nohup": set(), "stdbuf": set(), "command": set(), "exec": set(), "time": set(),
+}
+OPERADORES = frozenset(";|&()")             # separan comandos: ; | || && & ( ) $( )
+
+
+def comando_real(tokens):
+    """Quita sudo, env, xargs y similares (con sus opciones) y devuelve [comando, *args]."""
+    i, prefijo = 0, None
+    while i < len(tokens):
+        token = tokens[i]
+        if token in ("{", "!"):                 # grupo o negación
+            i += 1
+        elif os.path.basename(token) in PREFIJOS:
+            prefijo, i = os.path.basename(token), i + 1
+        elif prefijo and token.startswith("-"):
+            i += 2 if token in PREFIJOS[prefijo] else 1
+        elif prefijo and (re.fullmatch(r"\w+=.*", token)
+                          or (prefijo == "timeout" and re.fullmatch(r"[\d.]+[smhd]?", token))):
+            i += 1
+        else:
+            break
+    return tokens[i:]
+
+
+def segmentos(comando):
+    """Tokens de cada comando de la línea (cortando en ; | & y paréntesis, no dentro de comillas)."""
+    for linea in (comando or "").replace("`", " ; ").splitlines():
+        try:
+            tokens = list(shlex.shlex(linea, posix=True, punctuation_chars=True))
+        except ValueError:                  # comillas sin cerrar: corte simple
+            tokens = re.findall(r"[;|&()]+|[^\s;|&()]+", linea)
+        actual = []
+        for token in tokens:
+            if token and set(token) <= OPERADORES:
+                if actual:
+                    yield actual
+                actual = []
+            else:
+                actual.append(token)
+        if actual:
+            yield actual
+
+
+def segmento_exige_aprobacion(tokens):
+    partes = comando_real(tokens)
+    if not partes:
+        return False
+    nombre, args = os.path.basename(partes[0]), set(partes[1:])
+    if nombre in ("sh", "bash", "dash", "zsh") and "-c" in partes[1:-1]:
+        return exige_aprobacion(partes[partes.index("-c") + 1])   # sudo sh -c '...'
+    if nombre in COMANDOS_CON_APROBACION or nombre.startswith("mkfs."):
+        return not args & ARGUMENTOS_SOLO_LECTURA.get(nombre, set())
+    if args & ARGUMENTOS_CON_APROBACION.get(nombre, set()):
+        return True
+    if nombre == "sed":                     # sed -i edita el archivo en su sitio
+        return any(a.startswith("--in-place") or re.fullmatch(r"-[A-Za-z]*i\S*", a) for a in args)
+    if nombre == "find" and args & {"-exec", "-execdir", "-ok"}:
+        resto = partes[1:]
+        return any(os.path.basename(resto[k + 1]) in COMANDOS_CON_APROBACION
+                   for k, a in enumerate(resto[:-1]) if a in ("-exec", "-execdir", "-ok"))
+    return False
+
+
+def exige_aprobacion(comando):
+    """True si algún comando de la línea borra, corta accesos o cambia cuentas o servicios."""
+    return any(segmento_exige_aprobacion(tokens) for tokens in segmentos(comando))
+
+
 def validar_pasos(pasos, fase):
     _exigir(isinstance(pasos, list) and pasos, f"fase '{fase}': 'pasos' debe ser una lista no vacía")
     salida = []
@@ -705,9 +806,11 @@ def validar_pasos(pasos, fase):
         comando = p.get("comando")
         if isinstance(comando, list):               # varias líneas de comando
             comando = "\n".join(str(c) for c in comando)
-        salida.append({"texto": _texto(p.get("texto"), f"{donde}.texto"),
-                       "comando": "" if comando is None else str(comando).strip(),
-                       "requiere_aprobacion": normalizar_aprobacion(p.get("requiere_aprobacion"))})
+        comando = "" if comando is None else str(comando).strip()
+        texto = _texto(p.get("texto"), f"{donde}.texto")
+        # el código puede añadir el ⚠️, nunca quitarlo
+        aprobacion = normalizar_aprobacion(p.get("requiere_aprobacion")) or exige_aprobacion(comando)
+        salida.append({"texto": texto, "comando": comando, "requiere_aprobacion": aprobacion})
     return salida
 
 

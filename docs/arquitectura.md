@@ -140,6 +140,13 @@ Las respuestas de los modelos no se aceptan tal cual. Hay dos niveles:
 - Hora `"3:12:01"` pasa a `"03:12:01"`; `"03:12"` pasa a `"03:12:00"`.
 - `requiere_aprobacion` acepta `true`/`false`/`sí`/`no` como texto; si falta, vale
   `true` por seguridad.
+- Además, `exige_aprobacion()` lo fuerza a `true` si el comando borra, corta
+  accesos o cambia cuentas, servicios o el firewall, diga lo que diga el modelo.
+  Trocea la línea con `shlex` (respeta comillas: `grep 'userdel|passwd'` no se
+  marca), salta prefijos como `sudo -u root` o `xargs -r`, entra en `sh -c '…'` y
+  excluye los usos de solo lectura (`iptables -L`, `chage -l`, `systemctl status`,
+  `crontab -l`). Se aplica en `validar_pasos`, por donde pasan los pasos de los
+  workers, de la síntesis y del respaldo. Solo añade la marca, nunca la quita.
 - `lineas` como `[ini, fin]`, lista de números o texto con `L#`; elementos de
   lista como texto o como `{"texto": ...}`; `comando` como lista de líneas.
 
